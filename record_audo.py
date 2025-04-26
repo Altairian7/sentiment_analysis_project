@@ -4,9 +4,9 @@ import sounddevice as sd
 from scipy.io.wavfile import write
 
 # Settings
-duration = 600  # 10 minutes = 600 seconds
+duration = 10 # 10 minutes = 600 seconds
 samplerate = 16000  # 16 kHz is enough for speech
-filename = "recorded_audio.wav"
+filename = "/audio/recorded_audio.wav"
 
 print("Recording started for 10 minutes... Speak now!")
 
