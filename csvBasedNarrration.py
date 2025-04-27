@@ -16,7 +16,7 @@ for voice in voices:
         break
 
 # Configure Gemini API
-YOUR_GEMINI_API_KEY = "AIzaSyDT2w5HWtI5cdYjudW46CGw23WqZByya4U"  # Replace
+YOUR_GEMINI_API_KEY = ""  # add your Gemini API key here
 genai.configure(api_key=YOUR_GEMINI_API_KEY)
 
 # Load memories from CSV
