@@ -130,20 +130,38 @@ def get_event_location(text):
         return "🌍 Location Detected: " + ", ".join(set(locations))
     else:
         return "🌍 No clear location detected"
-
+    
+    
 def get_importance_score(text):
     text_lower = text.lower()
-    importance_count = sum(1 for keyword in importance_keywords if keyword in text_lower)
-    normalized_score = min(importance_count / 5, 1.0)
+    
+    # Define tiers of importance with different weights
+    high_importance = ["urgent", "critical", "emergency", "help", "fell", "fall", "hurt", "pain"]
+    medium_importance = ["important", "must", "need", "required", "medication", "medicine", "doctor", "appointment"]
+    low_importance = ["wish", "plan", "eat", "food", "bath", "shower", "sleep", "walk"]
+    
+    # Count weighted occurrences
+    high_count = sum(1 for keyword in high_importance if keyword in text_lower)
+    medium_count = sum(1 for keyword in medium_importance if keyword in text_lower)
+    low_count = sum(1 for keyword in low_importance if keyword in text_lower)
+    
+    # Calculate weighted score (high=3x, medium=2x, low=1x)
+    weighted_score = (high_count * 3 + medium_count * 2 + low_count) / 10
+    
+    # Ensure the score is between 0 and 1
+    normalized_score = min(max(weighted_score, 0), 1.0)
+    
     return round(normalized_score, 2)
 
+
 def get_importance_label(score):
-    if score >= 0.8:
+    if score >= 0.6:  # Changed from 0.8
         return "🔥 Very Important"
-    elif score >= 0.4:
+    elif score >= 0.3:  # Changed from 0.4
         return "⭐ Important"
     else:
         return "✅ Normal Routine"
+    
 
 def detect_potential_concerns(text):
     """Detect potential concerns or issues that might need caregiver attention"""
