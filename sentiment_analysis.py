@@ -1,4 +1,3 @@
-import re
 import nltk
 import dateparser
 from dateparser.search import search_dates  # <-- add this
