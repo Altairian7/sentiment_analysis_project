@@ -317,3 +317,73 @@ def summarize_text(text, ratio=0.3):
         return text
     except Exception:
         return text  # Return original text if summarization fails
+    
+    
+    
+    
+    
+    
+    
+def save_analysis(analysis_data):
+    """Save analysis results to SQLite database"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        INSERT INTO analysis_results 
+        (timestamp, text, vader_compound, vader_sentiment, distilbert_label, 
+        distilbert_score, importance_score, importance_label, event_age, 
+        event_location, language, topics)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            datetime.now().isoformat(),
+            analysis_data['text'],
+            analysis_data['vader_compound'],
+            analysis_data['vader_sentiment'],
+            analysis_data['distilbert_label'],
+            analysis_data['distilbert_score'],
+            analysis_data['importance_score'],
+            analysis_data['importance_label'],
+            analysis_data['event_age'],
+            analysis_data['event_location'],
+            analysis_data['language'],
+            json.dumps(analysis_data['topics'])
+        ))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Database error: {e}")
+        return False
+
+def compare_analyses(text1, text2):
+    """Compare sentiment analysis between two texts"""
+    # Analyze both texts
+    analysis1 = analyze_sentiment(text1, print_results=False)
+    analysis2 = analyze_sentiment(text2, print_results=False)
+    
+    # Calculate differences
+    vader_diff = analysis2['vader_compound'] - analysis1['vader_compound']
+    importance_diff = analysis2['importance_score'] - analysis1['importance_score']
+    
+    print("\n🔄 Sentiment Comparison:")
+    print(f"Text 1: {text1}")
+    print(f"Text 2: {text2}")
+    print(f"VADER sentiment change: {vader_diff:.4f} ({analysis1['vader_sentiment']} → {analysis2['vader_sentiment']})")
+    print(f"Importance score change: {importance_diff:.2f} ({analysis1['importance_label']} → {analysis2['importance_label']})")
+    
+    if vader_diff > 0.25:
+        print("📈 Significant positive sentiment shift")
+    elif vader_diff < -0.25:
+        print("📉 Significant negative sentiment shift")
+    else:
+        print("↔️ Similar sentiment levels")
+    
+    return {
+        'vader_diff': vader_diff,
+        'importance_diff': importance_diff,
+        'analysis1': analysis1,
+        'analysis2': analysis2
+    }
