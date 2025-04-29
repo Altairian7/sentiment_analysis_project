@@ -85,3 +85,33 @@ def load_ner_model():
     except Exception as e:
         print(f"❌ Failed to load NER model: {e}")
         return None
+    
+    
+    
+    
+    
+# Load models with caching
+distilbert_analyzer = load_sentiment_model()
+ner_pipeline = load_ner_model()
+
+# Enhanced list of important keywords with categorization
+important_keywords = {
+    "urgency": [
+        "urgent", "critical", "immediately", "asap", "emergency", "pressing", 
+        "deadline", "crucial", "vital", "priority"
+    ],
+    "necessity": [
+        "must", "need", "required", "essential", "necessary", "mandatory",
+        "non-negotiable", "imperative", "required", "obligatory"
+    ],
+    "aspiration": [
+        "wish", "dream", "plan", "goal", "intention", "objective", "ambition",
+        "aspiration", "resolve", "dedication", "commitment", "focus", "vision",
+        "strategy", "purpose", "mission"
+    ],
+    "significance": [
+        "important", "meaningful", "significant", "major", "substantial",
+        "considerable", "notable", "remarkable", "momentous", "pivotal",
+        "top priority", "life goal", "milestone"
+    ]
+}
