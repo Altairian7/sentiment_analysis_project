@@ -57,3 +57,31 @@ def init_db():
 
 # Initialize VADER
 vader_analyzer = SentimentIntensityAnalyzer()
+
+
+
+# Cache model loading with function decorator
+@lru_cache(maxsize=2)
+def load_sentiment_model():
+    print("⚙️ Loading DistilBERT sentiment model...")
+    try:
+        return pipeline(
+            "sentiment-analysis",
+            model="distilbert/distilbert-base-uncased-finetuned-sst-2-english"
+        )
+    except Exception as e:
+        print(f"❌ Failed to load DistilBERT model: {e}")
+        return None
+
+@lru_cache(maxsize=2)
+def load_ner_model():
+    print("⚙️ Loading NER model for location detection...")
+    try:
+        return pipeline(
+            "ner",
+            model="dbmdz/bert-large-cased-finetuned-conll03-english",
+            aggregation_strategy="simple"
+        )
+    except Exception as e:
+        print(f"❌ Failed to load NER model: {e}")
+        return None
