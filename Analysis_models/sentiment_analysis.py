@@ -271,3 +271,49 @@ def analyze_emoji_sentiment(text):
         return "Negative emoji sentiment", emoji_sentiment
     else:
         return "Neutral emoji sentiment", emoji_sentiment
+    
+    
+
+
+
+def extract_topics(text, num_topics=2, num_words=3):
+    """Extract main topics from text using LDA"""
+    try:
+        # Create a vectorizer
+        vectorizer = CountVectorizer(max_df=0.95, min_df=2, stop_words='english')
+        
+        # If text is too short, return empty
+        if len(text.split()) < 10:
+            return ["Text too short for topic extraction"]
+        
+        # Create document-term matrix
+        dtm = vectorizer.fit_transform([text])
+        
+        # Create and fit LDA model
+        lda_model = LatentDirichletAllocation(n_components=num_topics, random_state=42)
+        lda_model.fit(dtm)
+        
+        # Get feature names
+        feature_names = vectorizer.get_feature_names_out()
+        
+        # Get topics
+        topics = []
+        for topic_idx, topic in enumerate(lda_model.components_):
+            top_words_idx = topic.argsort()[:-num_words-1:-1]
+            top_words = [feature_names[i] for i in top_words_idx]
+            topics.append(", ".join(top_words))
+        
+        return topics
+    except Exception as e:
+        print(f"Topic extraction error: {e}")
+        return ["Topic extraction failed"]
+
+def summarize_text(text, ratio=0.3):
+    """Summarize longer text inputs"""
+    try:
+        if len(text.split()) > 100:  # Only summarize longer texts
+            summary = gensim_summarize(text, ratio=ratio)
+            return summary if summary else text  # Return original if summarization fails
+        return text
+    except Exception:
+        return text  # Return original text if summarization fails
