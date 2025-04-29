@@ -229,3 +229,45 @@ def get_importance_score(text):
     normalized_score = min(total_matches / max(text_length / 10, 1), 1.0)
     
     return round(normalized_score, 2), keyword_matches
+
+
+
+def get_importance_label(score):
+    """Convert importance score to a descriptive label"""
+    if score >= 0.8:
+        return "🔥 Very Important"
+    elif score >= 0.4:
+        return "⭐ Important"
+    elif score >= 0.2:
+        return "📌 Somewhat Important"
+    else:
+        return "✅ Standard Priority"
+
+def analyze_emoji_sentiment(text):
+    """Analyze sentiment conveyed by emojis in the text"""
+    emoji_list = emoji.emoji_list(text)
+    
+    if not emoji_list:
+        return "No emojis detected", 0
+    
+    # Simple emoji sentiment dictionary (could be expanded)
+    positive_emojis = {"😊", "😁", "😄", "😃", "😀", "🙂", "😍", "🥰", "❤️", "👍", "✅", "🎉", "🎊"}
+    negative_emojis = {"😢", "😭", "😞", "😔", "😟", "😠", "😡", "👎", "❌", "💔", "😒", "😣"}
+    
+    emoji_count = len(emoji_list)
+    positive_count = sum(1 for e in emoji_list if e['emoji'] in positive_emojis)
+    negative_count = sum(1 for e in emoji_list if e['emoji'] in negative_emojis)
+    
+    # Calculate net sentiment
+    if emoji_count == 0:
+        emoji_sentiment = 0
+    else:
+        emoji_sentiment = (positive_count - negative_count) / emoji_count
+    
+    # Return label and score
+    if emoji_sentiment > 0.3:
+        return "Positive emoji sentiment", emoji_sentiment
+    elif emoji_sentiment < -0.3:
+        return "Negative emoji sentiment", emoji_sentiment
+    else:
+        return "Neutral emoji sentiment", emoji_sentiment
