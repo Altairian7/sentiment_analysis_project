@@ -387,3 +387,204 @@ def compare_analyses(text1, text2):
         'analysis1': analysis1,
         'analysis2': analysis2
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+def analyze_sentiment(text, print_results=True):
+    """Main sentiment analysis function with multiple metrics"""
+    # Detect language
+    language = detect_language(text)
+    
+    # Process text based on language
+    if language != 'en':
+        print(f"⚠️ Detected non-English text ({language}). Results may be less accurate.")
+    
+    # Get date information
+    event_age, event_date = get_event_age(text)
+    
+    # Get location information
+    event_location, location_data = get_event_location(text)
+    
+    # Get importance information
+    importance_score, keyword_matches = get_importance_score(text)
+    importance_label = get_importance_label(importance_score)
+    
+    # VADER sentiment analysis
+    vader_scores = vader_analyzer.polarity_scores(text)
+    vader_sentiment = (
+        "Positive" if vader_scores['compound'] >= 0.05 else
+        "Negative" if vader_scores['compound'] <= -0.05 else
+        "Neutral"
+    )
+    
+    # DistilBERT sentiment analysis
+    distilbert_label = "Neutral"
+    distilbert_score = 0.5
+    
+    if distilbert_analyzer:
+        try:
+            distilbert_result = distilbert_analyzer(text)[0]
+            distilbert_label = distilbert_result['label']
+            distilbert_score = distilbert_result['score']
+        except Exception as e:
+            print(f"⚠️ DistilBERT analysis error: {e}")
+    
+    # Emoji sentiment analysis
+    emoji_sentiment_label, emoji_sentiment_score = analyze_emoji_sentiment(text)
+    
+    # Topic extraction
+    topics = extract_topics(text)
+    
+    # Create analysis data dictionary
+    analysis_data = {
+        'text': text,
+        'vader_compound': vader_scores['compound'],
+        'vader_sentiment': vader_sentiment,
+        'distilbert_label': distilbert_label,
+        'distilbert_score': distilbert_score,
+        'importance_score': importance_score,
+        'importance_label': importance_label,
+        'event_age': event_age,
+        'event_location': event_location,
+        'language': language,
+        'emoji_sentiment': emoji_sentiment_label,
+        'emoji_score': emoji_sentiment_score,
+        'topics': topics,
+        'keyword_matches': keyword_matches
+    }
+    
+    # Save to database
+    save_analysis(analysis_data)
+    
+    if print_results:
+        print(f"\n📝 Input Sentence: {text}")
+        
+        # Summarize if text is long
+        if len(text.split()) > 100:
+            summary = summarize_text(text)
+            print(f"📋 Summary: {summary}")
+        
+        print(f"🔤 Detected Language: {language}")
+        print("🔹 VADER Sentiment:")
+        print(f"   Compound Score: {vader_scores['compound']:.4f}")
+        print(f"   Sentiment: {vader_sentiment}")
+        print("🔹 DistilBERT Sentiment:")
+        print(f"   Label: {distilbert_label}")
+        print(f"   Confidence Score: {distilbert_score:.4f}")
+        print("🔹 Emoji Sentiment:")
+        print(f"   {emoji_sentiment_label} ({emoji_sentiment_score:.2f})")
+        print("🔹 Importance Score:")
+        print(f"   {importance_score} - {importance_label}")
+        
+        if keyword_matches:
+            print("   Keyword Categories:")
+            for category, count in keyword_matches.items():
+                print(f"      - {category.capitalize()}: {count}")
+        
+        print("🔹 Event Memory (Date Info):")
+        print(f"   {event_age}")
+        print("🔹 Event Location:")
+        print(f"   {event_location}")
+        print("🔹 Topics:")
+        for i, topic in enumerate(topics):
+            print(f"   Topic {i+1}: {topic}")
+    
+    return analysis_data
+
+def print_help():
+    """Print help information for the tool"""
+    print("\n📘 Available Commands:")
+    print("  help         - Show this help message")
+    print("  exit         - Exit the program")
+    print("  history      - Show recent analysis history")
+    print("  compare      - Compare two sentences (you'll be prompted for input)")
+    print("  [any text]   - Analyze the sentiment of the provided text")
+
+def show_history(limit=5):
+    """Show recent analysis history from the database"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        SELECT timestamp, text, vader_sentiment, importance_label 
+        FROM analysis_results 
+        ORDER BY timestamp DESC
+        LIMIT ?
+        ''', (limit,))
+        
+        results = cursor.fetchall()
+        conn.close()
+        
+        if not results:
+            print("📭 No analysis history found")
+            return
+        
+        print("\n📜 Recent Analysis History:")
+        for i, (timestamp, text, sentiment, importance) in enumerate(results):
+            dt = datetime.fromisoformat(timestamp)
+            formatted_time = dt.strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Truncate text if too long
+            truncated_text = text[:50] + "..." if len(text) > 50 else text
+            
+            print(f"{i+1}. [{formatted_time}] - {truncated_text}")
+            print(f"   Sentiment: {sentiment}, Importance: {importance}")
+        
+    except Exception as e:
+        print(f"Error retrieving history: {e}")
+
+if __name__ == "__main__":
+    print("\n💬 Enhanced Sentiment Analysis Tool v2.0\n")
+    print("Features: VADER + DistilBERT + Event Memory + Location + Importance + Emoji + Topics + Comparison")
+    print("Type 'help' for available commands")
+    
+    # Initialize database
+    init_db()
+    
+    previous_text = None
+    
+    while True:
+        try:
+            user_input = input("\n> ")
+            
+            if user_input.strip().lower() == "exit":
+                print("👋 Exiting...")
+                break
+                
+            elif user_input.strip().lower() == "help":
+                print_help()
+                
+            elif user_input.strip().lower() == "history":
+                show_history()
+                
+            elif user_input.strip().lower() == "compare":
+                print("Enter first text:")
+                text1 = input("> ")
+                print("Enter second text:")
+                text2 = input("> ")
+                
+                if text1.strip() and text2.strip():
+                    compare_analyses(text1, text2)
+                else:
+                    print("⚠️ Both inputs must be non-empty")
+                
+            elif user_input.strip() == "":
+                print("⚠️ Please enter a non-empty sentence.")
+                
+            else:
+                analyze_sentiment(user_input)
+                previous_text = user_input
+                
+        except KeyboardInterrupt:
+            print("\n👋 Exiting...")
+            break
+        except Exception as e:
+            print(f"⚠️ Error: {e}")
