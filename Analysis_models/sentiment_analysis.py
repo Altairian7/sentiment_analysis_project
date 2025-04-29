@@ -115,3 +115,54 @@ important_keywords = {
         "top priority", "life goal", "milestone"
     ]
 }
+
+
+
+all_important_keywords = [keyword for category in important_keywords.values() for keyword in category]
+
+def get_keyword_category(word):
+    """Return the category of an important keyword"""
+    for category, keywords in important_keywords.items():
+        if word in keywords:
+            return category
+    return None
+
+def detect_language(text):
+    """Detect the language of the input text with error handling"""
+    try:
+        return detect(text)
+    except LangDetectException:
+        return "en"  # Default to English if detection fails
+
+def get_event_age(text):
+    """Extract and calculate the age of events mentioned in the text"""
+    try:
+        # Use dateparser search_dates to find any dates
+        results = dateparser.search.search_dates(text, settings={'PREFER_DATES_FROM': 'past'})
+        if results:
+            # Sort dates by earliest first
+            sorted_dates = sorted(results, key=lambda x: x[1])
+            parsed_date = sorted_dates[0][1]  # Use the earliest date
+            today = datetime.now()
+            diff = today - parsed_date
+            days_ago = diff.days
+            
+            if days_ago < 0:
+                return f"📅 Future event: {abs(days_ago)} days from now", parsed_date
+            elif days_ago == 0:
+                return "📅 Happened Today", parsed_date
+            elif days_ago == 1:
+                return "📅 Happened Yesterday", parsed_date
+            elif days_ago < 7:
+                return f"📅 Happened {days_ago} days ago", parsed_date
+            elif days_ago < 30:
+                return f"📅 Happened {days_ago // 7} week(s) ago", parsed_date
+            elif days_ago < 365:
+                return f"📅 Happened {days_ago // 30} month(s) ago", parsed_date
+            else:
+                return f"📅 Happened {days_ago // 365} year(s) ago", parsed_date
+        else:
+            return "📅 No clear event date detected", None
+    except Exception as e:
+        print(f"Date parsing error: {e}")
+        return "📅 Error detecting event date", None
