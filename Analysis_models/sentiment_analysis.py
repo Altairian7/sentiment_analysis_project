@@ -166,3 +166,66 @@ def get_event_age(text):
     except Exception as e:
         print(f"Date parsing error: {e}")
         return "📅 Error detecting event date", None
+    
+    
+    
+def get_event_location(text):
+    """Extract locations from text with confidence scores"""
+    if ner_pipeline is None:
+        return "🌍 Location detection unavailable", []
+    
+    try:
+        entities = ner_pipeline(text)
+        locations = []
+        
+        # Group identical locations and calculate confidence
+        location_confidence = {}
+        for ent in entities:
+            if ent['entity_group'] == 'LOC':
+                loc = ent['word']
+                score = ent['score']
+                if loc in location_confidence:
+                    # Average the confidence if we've seen this location before
+                    location_confidence[loc] = (location_confidence[loc] + score) / 2
+                else:
+                    location_confidence[loc] = score
+        
+        # Convert to a list of (location, confidence) tuples and sort by confidence
+        locations = [(loc, score) for loc, score in location_confidence.items()]
+        locations.sort(key=lambda x: x[1], reverse=True)
+        
+        if locations:
+            location_strs = [f"{loc} ({conf:.2f})" for loc, conf in locations]
+            return "🌍 Locations detected: " + ", ".join(location_strs), locations
+        else:
+            return "🌍 No clear location detected", []
+    except Exception as e:
+        print(f"Location detection error: {e}")
+        return "🌍 Error detecting locations", []
+
+def get_importance_score(text):
+    """Calculate importance score with stopword filtering"""
+    # Get stopwords
+    stop_words = set(stopwords.words('english'))
+    
+    text_lower = text.lower()
+    words = text_lower.split()
+    
+    # Filter out stopwords
+    filtered_words = [word for word in words if word not in stop_words]
+    filtered_text = " ".join(filtered_words)
+    
+    # Count occurrences of important keywords
+    keyword_matches = {}
+    for category, keywords in important_keywords.items():
+        category_count = sum(1 for keyword in keywords if keyword in filtered_text)
+        if category_count > 0:
+            keyword_matches[category] = category_count
+    
+    total_matches = sum(keyword_matches.values())
+    
+    # Calculate normalized score
+    text_length = max(len(filtered_words), 1)  # Avoid division by zero
+    normalized_score = min(total_matches / max(text_length / 10, 1), 1.0)
+    
+    return round(normalized_score, 2), keyword_matches
