@@ -1,0 +1,2 @@
+timestamp,input_text,sentiment_label,sentiment_score,vader_score,distilbert_score,importance_label,importance_score,event_age,event_date,location_indicators,routine_references,time_indicators,memory_references,grief_indicators,trauma_indicators,severity_indicators,potential_concerns
+2025-05-03 14:15:40,I have lost my document becuase of that I lost my job,Negative,-0.7786,-0.5574,-0.9998,Important,0.5,No clear date,,No location detected,None,no specific time detected,None,loss_mention,None,"grief_present, trauma_trigger","safety_risk, trauma_trigger"
