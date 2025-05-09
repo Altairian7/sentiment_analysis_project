@@ -1,8 +1,3 @@
-pip install TTS
-pip install resemblyzer
-pip install pydub sounddevice scipy
-
-
 import sounddevice as sd
 from scipy.io.wavfile import write
 
