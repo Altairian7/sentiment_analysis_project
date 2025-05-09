@@ -14,3 +14,14 @@ def record_voice(filename="voice_sample.wav", duration=10, fs=16000):
     print(f"Saved to {filename}")
 
 record_voice()
+
+
+
+from resemblyzer import VoiceEncoder, preprocess_wav
+from pathlib import Path
+
+def get_voice_embedding(wav_path="voice_sample.wav"):
+    encoder = VoiceEncoder()
+    wav = preprocess_wav(Path(wav_path))
+    embed = encoder.embed_utterance(wav)
+    return embed
