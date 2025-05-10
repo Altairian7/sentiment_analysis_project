@@ -70,4 +70,23 @@ def recognize(audio_path):
 if __name__ == "__main__":
     file = record_audio(duration=12)
     result = recognize(file)
-    print("🎵 Result:", json.dumps(result, indent=2))
+    
+    
+    
+    # print("🎵 Result:", json.dumps(result, indent=2))
+
+
+    try:
+        music_info = result['metadata']['music'][0]
+        title = music_info.get('title', 'Unknown Title')
+        artists = ', '.join(artist['name'] for artist in music_info.get('artists', []))
+        album = music_info.get('album', {}).get('name', 'Unknown Album')
+        release_date = music_info.get('release_date', 'Unknown Release Date')
+        
+        print("🎶 Song Identified!")
+        print(f"🎵 Title       : {title}")
+        print(f"🎤 Artist(s)   : {artists}")
+        print(f"💿 Album       : {album}")
+        print(f"📅 Release Date: {release_date}")
+    except KeyError:
+        print("❌ Could not identify the song or unexpected response format.")
