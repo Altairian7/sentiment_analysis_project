@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🎵 Identify Song</title>
+</head>
+<body>
+  <h2>🎤 Record a 12-sec Clip to Identify Song</h2>
+  <button id="start">Start Recording</button>
+  <button id="stop" disabled>Stop & Identify</button>
+  <p id="status"></p>
+  <pre id="result"></pre>
+
+  <script>
+    let mediaRecorder;
+    let chunks = [];
+
+    document.getElementById('start').onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.start();
+      chunks = [];
+
+      document.getElementById('status').innerText = "Recording for 12 seconds...";
+      document.getElementById('start').disabled = true;
+      document.getElementById('stop').disabled = true;
+
+      mediaRecorder.ondataavailable = e => chunks.push(e.data);
+
+      setTimeout(() => {
+        mediaRecorder.stop();
+        document.getElementById('stop').disabled = false;
+      }, 12000);
+    };
+
+    document.getElementById('stop').onclick = () => {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      const formData = new FormData();
+      formData.append('file', blob, 'audio.webm');
+
+      document.getElementById('status').innerText = "Uploading & Identifying...";
+
+      fetch('/identify', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById('result').innerText = "❌ " + data.error;
+        } else {
+          document.getElementById('result').innerText =
+            `🎶 Title: ${data.title}\n👤 Artist(s): ${data.artists.join(', ')}\n💿 Album: ${data.album}\n📅 Release: ${data.release_date}`;
+        }
+        document.getElementById('status').innerText = "Done.";
+        document.getElementById('start').disabled = false;
+        document.getElementById('stop').disabled = true;
+      })
+      .catch(err => {
+        document.getElementById('result').innerText = "❌ Failed: " + err;
+      });
+    };
+  </script>
+</body>
+</html>
