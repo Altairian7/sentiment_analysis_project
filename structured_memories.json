@@ -1,0 +1,62 @@
+[
+  {
+    "meta": {
+      "timestamp": "2025-05-10 21:24:14",
+      "input_text": "I ate too much, now my stomach is not feeling well, it really hurts"
+    },
+    "sentiment_analysis": {
+      "combined": {
+        "label": "Negative",
+        "score": -0.8389
+      },
+      "vader": {
+        "score": -0.6785,
+        "label": "Negative"
+      },
+      "distilbert": {
+        "label": "NEGATIVE",
+        "score": 0.9993,
+        "mapped_score": -0.9993
+      }
+    },
+    "emotional_significance": {
+      "label": "Normal Routine",
+      "score": 0.2
+    },
+    "temporal_context": {
+      "event_age": "2 days ago",
+      "event_date": "2025-05-08",
+      "time_indicators": [
+        "no specific time detected"
+      ]
+    },
+    "spatial_context": {
+      "location": "No location detected"
+    },
+    "activity_references": [],
+    "relationship_indicators": {
+      "family_mentions": []
+    },
+    "emotional_indicators": {
+      "grief_indicators": [
+        "active_grief"
+      ],
+      "trauma_indicators": [],
+      "severity_indicators": [
+        "grief_present"
+      ]
+    },
+    "care_needs": {
+      "potential_concerns": [
+        "safety_risk"
+      ],
+      "recommendations": [
+        "Validate feelings and provide emotional support",
+        "Consider scheduled discussion of memories in controlled therapeutic setting",
+        "Consider distraction techniques if distress increases",
+        "Schedule enjoyable activity following difficult memory discussions",
+        "Monitor for signs of depression or withdrawal"
+      ]
+    }
+  }
+]
