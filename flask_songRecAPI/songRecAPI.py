@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import time, hmac, hashlib, base64, wave, pyaudio, requests, json
+import time, hmac, hashlib, base64, requests
+import os
 
 # ACRCloud credentials
 HOST = 'https://identify-ap-southeast-1.acrcloud.com/v1/identify'
@@ -9,27 +10,34 @@ ACCESS_SECRET = '0RuaQqJB6WgmZjzvMSra8CpqIoeKQ6KduQgEQ3Rq'
 
 app = Flask(__name__)
 CORS(app)
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-def record_audio(file_name="recorded.wav", duration=10):
-    RATE = 44100
-    CHANNELS = 1
-    FORMAT = pyaudio.paInt16
-    CHUNK = 1024
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-    audio = pyaudio.PyAudio()
-    stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
-    frames = [stream.read(CHUNK) for _ in range(0, int(RATE / CHUNK * duration))]
+@app.route('/identify', methods=['POST'])
+def identify_song():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
 
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
+    file = request.files['file']
+    path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(path)
 
-    with wave.open(file_name, 'wb') as wf:
-        wf.setnchannels(CHANNELS)
-        wf.setsampwidth(audio.get_sample_size(FORMAT))
-        wf.setframerate(RATE)
-        wf.writeframes(b''.join(frames))
-    return file_name
+    # Send to ACRCloud
+    result = recognize(path)
+    try:
+        music_info = result['metadata']['music'][0]
+        return jsonify({
+            'title': music_info.get('title', 'Unknown'),
+            'artists': [a['name'] for a in music_info.get('artists', [])],
+            'album': music_info.get('album', {}).get('name', 'Unknown'),
+            'release_date': music_info.get('release_date', 'Unknown')
+        })
+    except:
+        return jsonify({'error': 'Could not recognize song'}), 400
 
 def recognize(audio_path):
     http_method = "POST"
@@ -57,22 +65,5 @@ def recognize(audio_path):
     response = requests.post(HOST, files=files, data=data)
     return response.json()
 
-@app.route('/identify', methods=['GET'])
-def identify_song():
-    file = record_audio(duration=10)
-    result = recognize(file)
-    try:
-        music_info = result['metadata']['music'][0]
-        return jsonify({
-            'title': music_info.get('title', 'Unknown'),
-            'artists': [a['name'] for a in music_info.get('artists', [])],
-            'album': music_info.get('album', {}).get('name', 'Unknown'),
-            'release_date': music_info.get('release_date', 'Unknown')
-        })
-    except:
-        return jsonify({'error': 'Could not recognize song'}), 400
-
-if __name__ == "__main__":
-    # app.run(port=5000)
-    app.run(host='0.0.0.0', port=5000)
-
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000, debug=True) 
